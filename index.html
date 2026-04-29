@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyPredict — Predicción de Vuelos</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Variables ── */
+    :root {
+      --navy:        #0d2b4e;
+      --navy-light:  #163a65;
+      --sky:         #2d7dd2;
+      --sky-light:   #5fa8e8;
+      --cream:       #f5f0e8;
+      --cream-dark:  #ede6d8;
+      --sunset-1:    #f4a261;   /* naranja durazno */
+      --sunset-2:    #e76f51;   /* coral suave */
+      --sunset-3:    #f8c8a0;   /* melocotón claro */
+      --white:       #ffffff;
+      --text-dark:   #1a2e42;
+      --text-muted:  #6b7f96;
+      --shadow:      0 8px 32px rgba(13,43,78,0.13);
+      --radius:      16px;
+    }
+
+    /* ── Base ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Sky background con gradiente atardecer ── */
+    .sky-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: linear-gradient(
+        170deg,
+        #0d2b4e 0%,
+        #163a65 30%,
+        #1e5490 50%,
+        #c97b3a 75%,
+        #e8935c 85%,
+        #f4b982 100%
+      );
+    }
+
+    /* Estrellas / partículas decorativas */
+    .stars {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.7);
+      animation: twinkle 3s infinite alternate;
+    }
+    @keyframes twinkle {
+      from { opacity: 0.2; transform: scale(1); }
+      to   { opacity: 0.9; transform: scale(1.4); }
+    }
+
+    /* ── Layout principal ── */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .logo-plane {
+      font-size: 2.2rem;
+      color: var(--sunset-1);
+      filter: drop-shadow(0 2px 8px rgba(244,162,97,0.5));
+      animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0) rotate(-5deg); }
+      50%      { transform: translateY(-6px) rotate(2deg); }
+    }
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--white);
+      letter-spacing: 0.02em;
+    }
+    .logo-text span { color: var(--sunset-1); }
+    .logo-sub {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: -4px;
+    }
+
+    /* ── Contenedor central ── */
+    .center-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem 1rem 3rem;
+    }
+
+    /* ── Card base ── */
+    .glass-card {
+      background: rgba(255,255,255,0.10);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 720px;
+      padding: 2.5rem 2.5rem 2rem;
+      animation: slideUp 0.5s ease both;
+    }
+    @keyframes slideUp {
+      from { opacity:0; transform: translateY(30px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    /* ── Screen: Selección de modelo ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .screen-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.7rem;
+      color: var(--white);
+      margin-bottom: 0.4rem;
+    }
+    .screen-subtitle {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.92rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Cards de selección de modelo */
+    .model-card {
+      background: rgba(255,255,255,0.08);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .model-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.25s;
+      border-radius: 12px;
+    }
+    .model-card.cancel::before  { background: linear-gradient(135deg, rgba(231,111,81,0.25), rgba(244,162,97,0.15)); }
+    .model-card.delay::before   { background: linear-gradient(135deg, rgba(45,125,210,0.25), rgba(95,168,232,0.15)); }
+    .model-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.4); }
+    .model-card:hover::before { opacity: 1; }
+
+    .model-icon {
+      font-size: 2.2rem;
+      margin-bottom: 0.6rem;
+    }
+    .model-card.cancel .model-icon { color: var(--sunset-1); }
+    .model-card.delay  .model-icon { color: var(--sky-light); }
+
+    .model-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      color: var(--white);
+      margin-bottom: 0.3rem;
+    }
+    .model-desc {
+      font-size: 0.84rem;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.5;
+    }
+    .model-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-top: 0.75rem;
+    }
+    .model-card.cancel .model-badge { background: rgba(244,162,97,0.25); color: var(--sunset-1); }
+    .model-card.delay  .model-badge { background: rgba(95,168,232,0.25); color: var(--sky-light); }
+
+    /* ── Formulario ── */
+    .form-section-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--sunset-1);
+      margin-bottom: 0.75rem;
+      margin-top: 1.4rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid rgba(244,162,97,0.2);
+    }
+
+    .form-label {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 0.3rem;
+    }
+
+    .form-control, .form-select {
+      background: rgba(255,255,255,0.09) !important;
+      border: 1px solid rgba(255,255,255,0.18) !important;
+      border-radius: 10px !important;
+      color: var(--white) !important;
+      font-size: 0.88rem;
+      padding: 0.55rem 0.9rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control::placeholder { color: rgba(255,255,255,0.3) !important; }
+    .form-control:focus, .form-select:focus {
+      background: rgba(255,255,255,0.13) !important;
+      border-color: var(--sky-light) !important;
+      box-shadow: 0 0 0 3px rgba(95,168,232,0.2) !important;
+      outline: none;
+    }
+    .form-select option { background: var(--navy); color: var(--white); }
+
+    /* ── Botones ── */
+    .btn-back {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.7);
+      border-radius: 10px;
+      font-size: 0.85rem;
+      padding: 0.5rem 1.1rem;
+      transition: all 0.2s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+
+    .btn-save {
+      background: rgba(244,162,97,0.15);
+      border: 1px solid rgba(244,162,97,0.4);
+      color: var(--sunset-1);
+      border-radius: 10px;
+      font-size: 0.85rem;
+      padding: 0.5rem 1.1rem;
+      transition: all 0.2s;
+    }
+    .btn-save:hover { background: rgba(244,162,97,0.25); color: var(--sunset-1); }
+    .btn-save.saved { background: rgba(100,200,120,0.2); border-color: rgba(100,200,120,0.4); color: #7ddb95; }
+
+    .btn-predict {
+      background: linear-gradient(135deg, var(--sky), var(--navy-light));
+      border: none;
+      color: var(--white);
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 0.55rem 1.6rem;
+      transition: all 0.25s;
+      box-shadow: 0 4px 14px rgba(45,125,210,0.4);
+    }
+    .btn-predict:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(45,125,210,0.55);
+      color: var(--white);
+    }
+
+    /* Indicador de progreso guardado */
+    .save-indicator {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      margin-left: 0.5rem;
+    }
+
+    /* ── Modal de resultado ── */
+    .modal-content {
+      background: linear-gradient(145deg, #0f3058, #163a65) !important;
+      border: 1px solid rgba(255,255,255,0.15) !important;
+      border-radius: 20px !important;
+      color: var(--white);
+    }
+    .modal-header {
+      border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+      padding: 1.5rem 1.8rem 1rem;
+    }
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+    }
+    .btn-close { filter: invert(1) opacity(0.6); }
+    .modal-body { padding: 1.5rem 1.8rem; }
+    .modal-footer {
+      border-top: 1px solid rgba(255,255,255,0.1) !important;
+      padding: 1rem 1.8rem;
+    }
+
+    /* Resultado visual */
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      padding: 0.6rem 1.8rem;
+      border-radius: 50px;
+      margin: 1rem 0;
+    }
+    .result-badge.positive { /* cancelado / retrasado */
+      background: rgba(231,111,81,0.2);
+      border: 2px solid rgba(231,111,81,0.5);
+      color: #f4a070;
+    }
+    .result-badge.negative { /* no cancelado / a tiempo */
+      background: rgba(100,200,120,0.15);
+      border: 2px solid rgba(100,200,120,0.4);
+      color: #7ddb95;
+    }
+
+    .result-prob-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden;
+      margin-top: 0.4rem;
+    }
+    .result-prob-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.8s ease;
+    }
+    .result-prob-fill.high { background: linear-gradient(90deg, var(--sunset-2), var(--sunset-1)); }
+    .result-prob-fill.low  { background: linear-gradient(90deg, var(--sky), #7ddb95); }
+
+    .result-detail {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.5);
+      margin-top: 0.3rem;
+    }
+
+    /* Resumen de datos ingresados */
+    .summary-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 0.76rem;
+      color: rgba(255,255,255,0.65);
+      margin: 2px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 1rem;
+      color: rgba(255,255,255,0.25);
+      font-size: 0.75rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 576px) {
+      .glass-card { padding: 1.5rem 1.2rem; }
+      .screen-title { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fondo cielo -->
+  <div class="sky-bg"></div>
+  <div class="stars" id="stars"></div>
+
+  <div class="app-wrapper">
+
+    <!-- Header -->
+    <header>
+      <div>
+        <i class="bi bi-airplane-fill logo-plane"></i>
+      </div>
+      <div>
+        <div class="logo-text">Sky<span>Predict</span></div>
+        <div class="logo-sub">Predicción de Vuelos · ML</div>
+      </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <div class="center-container">
+      <div class="glass-card">
+
+        <!-- ══════════════════════════════
+             SCREEN 1: Selección de modelo
+             ══════════════════════════════ -->
+        <div class="screen active" id="screen-select">
+          <h1 class="screen-title">¿Qué deseas predecir?</h1>
+          <p class="screen-subtitle">Selecciona el tipo de predicción y completa los datos del vuelo.</p>
+
+          <div class="row g-3">
+            <!-- Opción 1: Cancelación -->
+            <div class="col-12 col-md-6">
+              <div class="model-card cancel h-100" onclick="selectModel('cancel')">
+                <div class="model-icon"><i class="bi bi-x-circle-fill"></i></div>
+                <div class="model-title">Cancelación de vuelo</div>
+                <div class="model-desc">
+                  Predice si un vuelo será cancelado antes de despegar, basado en sus características.
+                </div>
+                <div class="model-badge">Clasificación binaria</div>
+              </div>
+            </div>
+            <!-- Opción 2: Retraso -->
+            <div class="col-12 col-md-6">
+              <div class="model-card delay h-100" onclick="selectModel('delay')">
+                <div class="model-icon"><i class="bi bi-clock-history"></i></div>
+                <div class="model-title">Retraso significativo</div>
+                <div class="model-desc">
+                  Predice si un vuelo llegará con 15 o más minutos de retraso respecto a la hora programada.
+                </div>
+                <div class="model-badge">Clasificación binaria</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════
+             SCREEN 2: Formulario CANCELLED
+             ══════════════════════════════ -->
+        <div class="screen" id="screen-cancel">
+          <h1 class="screen-title">
+            <i class="bi bi-x-circle-fill me-2" style="color:var(--sunset-1);font-size:1.4rem;"></i>
+            Predicción de Cancelación
+          </h1>
+          <p class="screen-subtitle">Completa los datos del vuelo para obtener la predicción.</p>
+
+          <form id="form-cancel" novalidate>
+
+            <div class="form-section-title"><i class="bi bi-calendar3 me-1"></i> Fecha del vuelo</div>
+            <div class="row g-3">
+              <div class="col-6 col-md-3">
+                <label class="form-label">Año</label>
+                <select class="form-select" id="c-year" required>
+                  <option value="">Año</option>
+                  <option>2015</option><option>2016</option><option>2017</option>
+                  <option>2018</option><option>2019</option><option>2020</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label">Mes</label>
+                <select class="form-select" id="c-month" required>
+                  <option value="">Mes</option>
+                  <option value="1">Enero</option><option value="2">Febrero</option>
+                  <option value="3">Marzo</option><option value="4">Abril</option>
+                  <option value="5">Mayo</option><option value="6">Junio</option>
+                  <option value="7">Julio</option><option value="8">Agosto</option>
+                  <option value="9">Septiembre</option><option value="10">Octubre</option>
+                  <option value="11">Noviembre</option><option value="12">Diciembre</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label">Día del mes</label>
+                <input type="number" class="form-control" id="c-day" min="1" max="31" placeholder="1–31" required />
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label">Día semana</label>
+                <select class="form-select" id="c-dow" required>
+                  <option value="">Día</option>
+                  <option value="1">Lunes</option><option value="2">Martes</option>
+                  <option value="3">Miércoles</option><option value="4">Jueves</option>
+                  <option value="5">Viernes</option><option value="6">Sábado</option>
+                  <option value="7">Domingo</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-section-title"><i class="bi bi-airplane me-1"></i> Datos del vuelo</div>
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <label class="form-label">Aerolínea</label>
+                <select class="form-select" id="c-carrier" required>
+                  <option value="">Selecciona</option>
+                  <option>AA</option><option>AS</option><option>B6</option>
+                  <option>DL</option><option>EV</option><option>F9</option>
+                  <option>G4</option><option>HA</option><option>MQ</option>
+                  <option>NK</option><option>OO</option><option>UA</option>
+                  <option>US</option><option>VX</option><option>WN</option>
+                  <option>YV</option><option>YX</option><option>9E</option><option>OH</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label">Hora salida programada</label>
+                <input type="time" class="form-control" id="c-dep-time" required />
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label">Hora llegada programada</label>
+                <input type="time" class="form-control" id="c-arr-time" required />
+              </div>
+            </div>
+
+            <div class="form-section-title"><i class="bi bi-geo-alt me-1"></i> Ruta</div>
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label">Estado de origen</label>
+                <input type="text" class="form-control" id="c-origin-state" placeholder="Ej. TX" maxlength="2" required />
+              </div>
+              <div class="col-6">
+                <label class="form-label">Estado de destino</label>
+                <input type="text" class="form-control" id="c-dest-state" placeholder="Ej. CA" maxlength="2" required />
+              </div>
+              <div class="col-6">
+                <label class="form-label">Ciudad de origen</label>
+                <input type="text" class="form-control" id="c-origin-city" placeholder="Ej. Dallas" required />
+              </div>
+              <div class="col-6">
+                <label class="form-label">Ciudad de destino</label>
+                <input type="text" class="form-control" id="c-dest-city" placeholder="Ej. Los Angeles" required />
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Distancia (millas)</label>
+                <input type="number" class="form-control" id="c-distance" min="21" max="5095" placeholder="Ej. 853" required />
+              </div>
+            </div>
+
+          </form>
+
+          <!-- Botones -->
+          <div class="d-flex align-items-center justify-content-between mt-4 flex-wrap gap-2">
+            <button class="btn btn-back" onclick="goBack()">
+              <i class="bi bi-arrow-left me-1"></i> Regresar
+            </button>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <button class="btn btn-save" id="btn-save-cancel" onclick="saveProgress('cancel')">
+                <i class="bi bi-floppy me-1"></i> Guardar progreso
+              </button>
+              <span class="save-indicator" id="save-indicator-cancel"></span>
+              <button class="btn btn-predict" onclick="submitForm('cancel')">
+                Predecir <i class="bi bi-send-fill ms-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════
+             SCREEN 3: Formulario DELAY
+             ══════════════════════════════ -->
+        <div class="screen" id="screen-delay">
+          <h1 class="screen-title">
+            <i class="bi bi-clock-history me-2" style="color:var(--sky-light);font-size:1.4rem;"></i>
+            Predicción de Retraso ≥ 15 min
+          </h1>
+          <p class="screen-subtitle">Completa los datos del vuelo para obtener la predicción.</p>
+
+          <form id="form-delay" novalidate>
+
+            <div class="form-section-title"><i class="bi bi-calendar3 me-1"></i> Fecha del vuelo</div>
+            <div class="row g-3">
+              <div class="col-6 col-md-3">
+                <label class="form-label">Año</label>
+                <select class="form-select" id="d-year" required>
+                  <option value="">Año</option>
+                  <option>2015</option><option>2016</option><option>2017</option>
+                  <option>2018</option><option>2019</option><option>2020</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label">Mes</label>
+                <select class="form-select" id="d-month" required>
+                  <option value="">Mes</option>
+                  <option value="1">Enero</option><option value="2">Febrero</option>
+                  <option value="3">Marzo</option><option value="4">Abril</option>
+                  <option value="5">Mayo</option><option value="6">Junio</option>
+                  <option value="7">Julio</option><option value="8">Agosto</option>
+                  <option value="9">Septiembre</option><option value="10">Octubre</option>
+                  <option value="11">Noviembre</option><option value="12">Diciembre</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label">Día del mes</label>
+                <input type="number" class="form-control" id="d-day" min="1" max="31" placeholder="1–31" required />
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label">Día semana</label>
+                <select class="form-select" id="d-dow" required>
+                  <option value="">Día</option>
+                  <option value="1">Lunes</option><option value="2">Martes</option>
+                  <option value="3">Miércoles</option><option value="4">Jueves</option>
+                  <option value="5">Viernes</option><option value="6">Sábado</option>
+                  <option value="7">Domingo</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-section-title"><i class="bi bi-airplane me-1"></i> Datos del vuelo</div>
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <label class="form-label">Aerolínea</label>
+                <select class="form-select" id="d-carrier" required>
+                  <option value="">Selecciona</option>
+                  <option>AA</option><option>AS</option><option>B6</option>
+                  <option>DL</option><option>EV</option><option>F9</option>
+                  <option>G4</option><option>HA</option><option>MQ</option>
+                  <option>NK</option><option>OO</option><option>UA</option>
+                  <option>US</option><option>VX</option><option>WN</option>
+                  <option>YV</option><option>YX</option><option>9E</option><option>OH</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label">Hora salida programada</label>
+                <input type="time" class="form-control" id="d-dep-time" required />
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label">Hora llegada programada</label>
+                <input type="time" class="form-control" id="d-arr-time" required />
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label">Tiempo en aire (min)</label>
+                <input type="number" class="form-control" id="d-airtime" min="4" max="1557" placeholder="Ej. 111" required />
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label">Distancia (millas)</label>
+                <input type="number" class="form-control" id="d-distance" min="21" max="5095" placeholder="Ej. 853" required />
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label">Retraso en salida (min)</label>
+                <input type="number" class="form-control" id="d-dep-delay" min="0" placeholder="0 si puntual" required />
+              </div>
+            </div>
+
+            <div class="form-section-title"><i class="bi bi-geo-alt me-1"></i> Ruta</div>
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label">Estado de origen</label>
+                <input type="text" class="form-control" id="d-origin-state" placeholder="Ej. TX" maxlength="2" required />
+              </div>
+              <div class="col-6">
+                <label class="form-label">Estado de destino</label>
+                <input type="text" class="form-control" id="d-dest-state" placeholder="Ej. CA" maxlength="2" required />
+              </div>
+              <div class="col-6">
+                <label class="form-label">Ciudad de origen</label>
+                <input type="text" class="form-control" id="d-origin-city" placeholder="Ej. Dallas" required />
+              </div>
+              <div class="col-6">
+                <label class="form-label">Ciudad de destino</label>
+                <input type="text" class="form-control" id="d-dest-city" placeholder="Ej. Los Angeles" required />
+              </div>
+            </div>
+
+          </form>
+
+          <!-- Botones -->
+          <div class="d-flex align-items-center justify-content-between mt-4 flex-wrap gap-2">
+            <button class="btn btn-back" onclick="goBack()">
+              <i class="bi bi-arrow-left me-1"></i> Regresar
+            </button>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <button class="btn btn-save" id="btn-save-delay" onclick="saveProgress('delay')">
+                <i class="bi bi-floppy me-1"></i> Guardar progreso
+              </button>
+              <span class="save-indicator" id="save-indicator-delay"></span>
+              <button class="btn btn-predict" onclick="submitForm('delay')">
+                Predecir <i class="bi bi-send-fill ms-1"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /glass-card -->
+    </div><!-- /center-container -->
+
+    <footer>SkyPredict · Ciencia de los Datos · 2025</footer>
+  </div><!-- /app-wrapper -->
+
+
+  <!-- ══════════════════════════════
+       MODAL: Resultado de predicción
+       ══════════════════════════════ -->
+  <div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-title">Resultado de la Predicción</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Etiqueta del resultado -->
+          <div class="text-center">
+            <div class="result-badge" id="result-badge">
+              <i id="result-icon"></i>
+              <span id="result-label"></span>
+            </div>
+          </div>
+
+          <!-- Barra de probabilidad -->
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <small class="text-white-50">Probabilidad estimada</small>
+              <small class="text-white" id="result-prob-text">—</small>
+            </div>
+            <div class="result-prob-bar">
+              <div class="result-prob-fill" id="result-prob-fill" style="width:0%"></div>
+            </div>
+            <div class="result-detail" id="result-detail"></div>
+          </div>
+
+          <!-- Resumen de datos ingresados -->
+          <div class="mt-3">
+            <div class="form-section-title" style="margin-top:0;">
+              <i class="bi bi-list-check me-1"></i> Datos ingresados
+            </div>
+            <div id="result-summary"></div>
+          </div>
+
+          <!-- Nota backend -->
+          <div class="mt-3 p-2" style="background:rgba(255,255,255,0.05);border-radius:8px;">
+            <small class="text-white-50">
+              <i class="bi bi-info-circle me-1"></i>
+              Resultado simulado — la predicción real estará disponible cuando el backend con Flask esté conectado.
+            </small>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-back" data-bs-dismiss="modal">
+            <i class="bi bi-arrow-left me-1"></i> Volver al formulario
+          </button>
+          <button type="button" class="btn btn-predict" data-bs-dismiss="modal" onclick="goBack()">
+            Nueva predicción <i class="bi bi-plus-lg ms-1"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // ── Generar estrellas decorativas ──
+    (function() {
+      const container = document.getElementById('stars');
+      for (let i = 0; i < 60; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const size = Math.random() * 2.5 + 0.5;
+        s.style.cssText = `
+          width:${size}px; height:${size}px;
+          top:${Math.random()*60}%;
+          left:${Math.random()*100}%;
+          animation-delay:${Math.random()*4}s;
+          animation-duration:${2+Math.random()*3}s;
+        `;
+        container.appendChild(s);
+      }
+    })();
+
+    // ── Estado actual ──
+    let currentModel = null;
+
+    // ── Navegación ──
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function selectModel(model) {
+      currentModel = model;
+      showScreen('screen-' + model);
+      loadSavedProgress(model);   // restaurar progreso si existe
+    }
+
+    function goBack() {
+      currentModel = null;
+      showScreen('screen-select');
+    }
+
+    // ── Guardar progreso en localStorage ──
+    function getFormData(model) {
+      if (model === 'cancel') {
+        return {
+          year:       document.getElementById('c-year').value,
+          month:      document.getElementById('c-month').value,
+          day:        document.getElementById('c-day').value,
+          dow:        document.getElementById('c-dow').value,
+          carrier:    document.getElementById('c-carrier').value,
+          depTime:    document.getElementById('c-dep-time').value,
+          arrTime:    document.getElementById('c-arr-time').value,
+          originState:document.getElementById('c-origin-state').value,
+          destState:  document.getElementById('c-dest-state').value,
+          originCity: document.getElementById('c-origin-city').value,
+          destCity:   document.getElementById('c-dest-city').value,
+          distance:   document.getElementById('c-distance').value,
+        };
+      } else {
+        return {
+          year:       document.getElementById('d-year').value,
+          month:      document.getElementById('d-month').value,
+          day:        document.getElementById('d-day').value,
+          dow:        document.getElementById('d-dow').value,
+          carrier:    document.getElementById('d-carrier').value,
+          depTime:    document.getElementById('d-dep-time').value,
+          arrTime:    document.getElementById('d-arr-time').value,
+          airtime:    document.getElementById('d-airtime').value,
+          distance:   document.getElementById('d-distance').value,
+          depDelay:   document.getElementById('d-dep-delay').value,
+          originState:document.getElementById('d-origin-state').value,
+          destState:  document.getElementById('d-dest-state').value,
+          originCity: document.getElementById('d-origin-city').value,
+          destCity:   document.getElementById('d-dest-city').value,
+        };
+      }
+    }
+
+    function saveProgress(model) {
+      const data = getFormData(model);
+      localStorage.setItem('skypredict_' + model, JSON.stringify(data));
+
+      const btn = document.getElementById('btn-save-' + model);
+      const ind = document.getElementById('save-indicator-' + model);
+      btn.classList.add('saved');
+      btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> ¡Guardado!';
+      ind.textContent = new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
+
+      setTimeout(() => {
+        btn.classList.remove('saved');
+        btn.innerHTML = '<i class="bi bi-floppy me-1"></i> Guardar progreso';
+      }, 2500);
+    }
+
+    function loadSavedProgress(model) {
+      const raw = localStorage.getItem('skypredict_' + model);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+
+      if (model === 'cancel') {
+        document.getElementById('c-year').value         = d.year        || '';
+        document.getElementById('c-month').value        = d.month       || '';
+        document.getElementById('c-day').value          = d.day         || '';
+        document.getElementById('c-dow').value          = d.dow         || '';
+        document.getElementById('c-carrier').value      = d.carrier     || '';
+        document.getElementById('c-dep-time').value     = d.depTime     || '';
+        document.getElementById('c-arr-time').value     = d.arrTime     || '';
+        document.getElementById('c-origin-state').value = d.originState || '';
+        document.getElementById('c-dest-state').value   = d.destState   || '';
+        document.getElementById('c-origin-city').value  = d.originCity  || '';
+        document.getElementById('c-dest-city').value    = d.destCity    || '';
+        document.getElementById('c-distance').value     = d.distance    || '';
+      } else {
+        document.getElementById('d-year').value         = d.year        || '';
+        document.getElementById('d-month').value        = d.month       || '';
+        document.getElementById('d-day').value          = d.day         || '';
+        document.getElementById('d-dow').value          = d.dow         || '';
+        document.getElementById('d-carrier').value      = d.carrier     || '';
+        document.getElementById('d-dep-time').value     = d.depTime     || '';
+        document.getElementById('d-arr-time').value     = d.arrTime     || '';
+        document.getElementById('d-airtime').value      = d.airtime     || '';
+        document.getElementById('d-distance').value     = d.distance    || '';
+        document.getElementById('d-dep-delay').value    = d.depDelay    || '';
+        document.getElementById('d-origin-state').value = d.originState || '';
+        document.getElementById('d-dest-state').value   = d.destState   || '';
+        document.getElementById('d-origin-city').value  = d.originCity  || '';
+        document.getElementById('d-dest-city').value    = d.destCity    || '';
+      }
+
+      const ind = document.getElementById('save-indicator-' + model);
+      ind.textContent = '↩ Progreso restaurado';
+    }
+
+    // ── Enviar formulario y mostrar modal ──
+    function submitForm(model) {
+      const data = getFormData(model);
+
+      // Validación básica: campos vacíos
+      const empty = Object.values(data).some(v => v === '' || v === null);
+      if (empty) {
+        alert('Por favor completa todos los campos antes de predecir.');
+        return;
+      }
+
+      // Resultado simulado (se reemplazará con la llamada a /predict en Entrega 2)
+      const prob = Math.random();
+      const isPositive = prob > 0.5;
+
+      // Configurar modal
+      const badge   = document.getElementById('result-badge');
+      const icon    = document.getElementById('result-icon');
+      const label   = document.getElementById('result-label');
+      const fill    = document.getElementById('result-prob-fill');
+      const probTxt = document.getElementById('result-prob-text');
+      const detail  = document.getElementById('result-detail');
+      const title   = document.getElementById('modal-title');
+
+      if (model === 'cancel') {
+        title.textContent = 'Predicción · Cancelación de vuelo';
+        if (isPositive) {
+          badge.className  = 'result-badge positive';
+          icon.className   = 'bi bi-x-circle-fill';
+          label.textContent = 'Vuelo CANCELADO';
+          fill.className   = 'result-prob-fill high';
+          detail.textContent = 'Alta probabilidad de que el vuelo sea cancelado.';
+        } else {
+          badge.className  = 'result-badge negative';
+          icon.className   = 'bi bi-check-circle-fill';
+          label.textContent = 'No cancelado';
+          fill.className   = 'result-prob-fill low';
+          detail.textContent = 'Baja probabilidad de cancelación.';
+        }
+      } else {
+        title.textContent = 'Predicción · Retraso ≥ 15 min';
+        if (isPositive) {
+          badge.className  = 'result-badge positive';
+          icon.className   = 'bi bi-clock-history';
+          label.textContent = 'Retraso ≥ 15 min';
+          fill.className   = 'result-prob-fill high';
+          detail.textContent = 'Alta probabilidad de llegar con retraso significativo.';
+        } else {
+          badge.className  = 'result-badge negative';
+          icon.className   = 'bi bi-check-circle-fill';
+          label.textContent = 'Llegada a tiempo';
+          fill.className   = 'result-prob-fill low';
+          detail.textContent = 'Baja probabilidad de retraso significativo.';
+        }
+      }
+
+      const pct = Math.round(prob * 100);
+      probTxt.textContent = pct + '%';
+      setTimeout(() => { fill.style.width = pct + '%'; }, 100);
+
+      // Resumen de datos
+      const months = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      const days   = ['','Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+      const summary = document.getElementById('result-summary');
+      summary.innerHTML = [
+        chip('bi-calendar3', `${data.day}/${months[+data.month]}/${data.year}`),
+        chip('bi-calendar-week', days[+data.dow] || data.dow),
+        chip('bi-airplane', data.carrier),
+        chip('bi-geo-alt', `${data.originCity || data.originState} → ${data.destCity || data.destState}`),
+        chip('bi-clock', `${data.depTime} → ${data.arrTime}`),
+        data.distance ? chip('bi-rulers', data.distance + ' mi') : '',
+        data.airtime  ? chip('bi-hourglass-split', data.airtime + ' min aire') : '',
+        data.depDelay !== undefined && data.depDelay !== '' ? chip('bi-stopwatch', '+' + data.depDelay + ' min salida') : '',
+      ].join('');
+
+      new bootstrap.Modal(document.getElementById('resultModal')).show();
+    }
+
+    function chip(icon, text) {
+      return `<span class="summary-chip"><i class="bi ${icon}"></i>${text}</span>`;
+    }
+  </script>
+</body>
+</html>
