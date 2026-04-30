@@ -374,6 +374,156 @@ footer {
   z-index: 10;
 }
 
+/* ── Info cards (pantalla de inicio) ── */
+.info-card {
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 14px;
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+}
+.info-card.cancel { border-color: rgba(244,162,97,0.25); }
+.info-card.delay  { border-color: rgba(95,168,232,0.25); }
+
+.info-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.info-card-desc {
+  font-size: 0.86rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.6;
+  margin-bottom: 0.8rem;
+}
+.info-card-desc strong { color: rgba(255,255,255,0.85); }
+
+.info-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--sunset-1);
+  margin-bottom: 0.5rem;
+  margin-top: 0.2rem;
+}
+.info-card.delay .info-section-label { color: var(--sky-light); }
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.8rem 0;
+}
+.info-list li {
+  font-size: 0.83rem;
+  color: rgba(255,255,255,0.6);
+  padding: 0.2rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.info-list li i { color: var(--sunset-1); font-size: 0.8rem; }
+.info-card.delay .info-list li i { color: var(--sky-light); }
+
+.airline-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+.airline-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(244,162,97,0.15);
+  border: 1px solid rgba(244,162,97,0.3);
+  color: var(--sunset-1);
+}
+.airline-chip.delay-chip {
+  background: rgba(95,168,232,0.15);
+  border-color: rgba(95,168,232,0.3);
+  color: var(--sky-light);
+}
+
+.info-highlight {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+.cancel-hl { background: rgba(231,111,81,0.2); color: #f4a070; }
+.ok-hl     { background: rgba(100,200,120,0.15); color: #7ddb95; }
+
+/* Botón entrar al formulario */
+.btn-enter-form {
+  background: linear-gradient(135deg, var(--sunset-2), var(--sunset-1));
+  border: none;
+  color: var(--white);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  transition: all 0.25s;
+  box-shadow: 0 4px 14px rgba(231,111,81,0.3);
+  margin-top: auto !important;
+}
+.btn-enter-form:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(231,111,81,0.45);
+  color: var(--white);
+}
+.btn-enter-form.delay-enter {
+  background: linear-gradient(135deg, var(--sky), var(--navy-light));
+  box-shadow: 0 4px 14px rgba(45,125,210,0.35);
+}
+.btn-enter-form.delay-enter:hover {
+  box-shadow: 0 6px 20px rgba(45,125,210,0.5);
+}
+
+.model-badge.delay-badge {
+  background: rgba(95,168,232,0.25);
+  color: var(--sky-light);
+}
+
+/* ── Botón predecir cancelación ── */
+.btn-predict-cancel {
+  background: linear-gradient(135deg, var(--sunset-2), var(--sunset-1));
+  border: none;
+  color: var(--white);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.55rem 1.2rem;
+  transition: all 0.25s;
+  box-shadow: 0 4px 14px rgba(231,111,81,0.35);
+}
+.btn-predict-cancel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(231,111,81,0.5);
+  color: var(--white);
+}
+
+/* ── Botón predecir retraso ── */
+.btn-predict-delay {
+  background: linear-gradient(135deg, var(--sky), var(--navy-light));
+  border: none;
+  color: var(--white);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.55rem 1.2rem;
+  transition: all 0.25s;
+  box-shadow: 0 4px 14px rgba(45,125,210,0.4);
+}
+.btn-predict-delay:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(45,125,210,0.55);
+  color: var(--white);
+}
+
 /* ── Responsive ── */
 @media (max-width: 576px) {
   .glass-card { padding: 1.5rem 1.2rem; }

@@ -1,3 +1,14 @@
+// =============================================================
+// frontend.js
+// Proyecto: SkyPredict — Sistema Web de Predicción de Vuelos
+// Descripción: Lógica del frontend. Maneja navegación, formulario,
+//              comunicación con el backend Flask y visualización
+//              del resultado en el modal.
+// =============================================================
+
+// URL base del backend Flask
+const BACKEND_URL = 'http://localhost:5000';
+
 // ── Generar estrellas decorativas ──
 (function() {
   const container = document.getElementById('stars');
@@ -16,6 +27,7 @@
   }
 })();
 
+// ── Estado actual ──
 let currentModel = null;
 
 // ── Navegación ──
@@ -26,8 +38,15 @@ function showScreen(id) {
 
 function selectModel(model) {
   currentModel = model;
-  showScreen('screen-' + model);
-  loadSavedProgress(model);
+  // Actualizar título del formulario según el modelo
+  const titulo = document.getElementById('form-title');
+  if (model === 'cancel') {
+    titulo.innerHTML = `<i class="bi bi-x-circle-fill me-2" style="color:var(--sunset-1);font-size:1.4rem;"></i>Predicción de Cancelación`;
+  } else {
+    titulo.innerHTML = `<i class="bi bi-clock-history me-2" style="color:var(--sky-light);font-size:1.4rem;"></i>Predicción de Retraso ≥ 15 min`;
+  }
+  showScreen('screen-form');
+  loadSavedProgress();
 }
 
 function goBack() {
@@ -35,49 +54,39 @@ function goBack() {
   showScreen('screen-select');
 }
 
-// ── Guardar progreso en localStorage ──
-function getFormData(model) {
-  if (model === 'cancel') {
-    return {
-      year:        document.getElementById('c-year').value,
-      month:       document.getElementById('c-month').value,
-      day:         document.getElementById('c-day').value,
-      dow:         document.getElementById('c-dow').value,
-      carrier:     document.getElementById('c-carrier').value,
-      depTime:     document.getElementById('c-dep-time').value,
-      arrTime:     document.getElementById('c-arr-time').value,
-      originState: document.getElementById('c-origin-state').value,
-      destState:   document.getElementById('c-dest-state').value,
-      originCity:  document.getElementById('c-origin-city').value,
-      destCity:    document.getElementById('c-dest-city').value,
-      distance:    document.getElementById('c-distance').value,
-    };
-  } else {
-    return {
-      year:        document.getElementById('d-year').value,
-      month:       document.getElementById('d-month').value,
-      day:         document.getElementById('d-day').value,
-      dow:         document.getElementById('d-dow').value,
-      carrier:     document.getElementById('d-carrier').value,
-      depTime:     document.getElementById('d-dep-time').value,
-      arrTime:     document.getElementById('d-arr-time').value,
-      airtime:     document.getElementById('d-airtime').value,
-      distance:    document.getElementById('d-distance').value,
-      depDelay:    document.getElementById('d-dep-delay').value,
-      originState: document.getElementById('d-origin-state').value,
-      destState:   document.getElementById('d-dest-state').value,
-      originCity:  document.getElementById('d-origin-city').value,
-      destCity:    document.getElementById('d-dest-city').value,
-    };
-  }
+function goToForm() {
+  // Lleva al formulario sin preseleccionar modelo —
+  // el usuario decide con los dos botones de predicción
+  document.getElementById('form-title').innerHTML =
+    `<i class="bi bi-ui-checks me-2" style="color:var(--sunset-1);font-size:1.4rem;"></i>Formulario de Predicción`;
+  showScreen('screen-form');
+  loadSavedProgress();
 }
 
-function saveProgress(model) {
-  const data = getFormData(model);
-  localStorage.setItem('skypredict_' + model, JSON.stringify(data));
+// ── Leer datos del formulario unificado ──
+function getFormData() {
+  return {
+    year:        document.getElementById('f-year').value,
+    month:       document.getElementById('f-month').value,
+    day:         document.getElementById('f-day').value,
+    dow:         document.getElementById('f-dow').value,
+    carrier:     document.getElementById('f-carrier').value,
+    depTime:     document.getElementById('f-dep-time').value,
+    arrTime:     document.getElementById('f-arr-time').value,
+    originState: document.getElementById('f-origin-state').value,
+    destState:   document.getElementById('f-dest-state').value,
+    originCity:  document.getElementById('f-origin-city').value,
+    destCity:    document.getElementById('f-dest-city').value,
+  };
+}
 
-  const btn = document.getElementById('btn-save-' + model);
-  const ind = document.getElementById('save-indicator-' + model);
+// ── Guardar y restaurar progreso (localStorage) ──
+function saveProgress() {
+  const data = getFormData();
+  localStorage.setItem('skypredict_form', JSON.stringify(data));
+
+  const btn = document.getElementById('btn-save-form');
+  const ind = document.getElementById('save-indicator-form');
   btn.classList.add('saved');
   btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> ¡Guardado!';
   ind.textContent = new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
@@ -88,118 +97,142 @@ function saveProgress(model) {
   }, 2500);
 }
 
-function loadSavedProgress(model) {
-  const raw = localStorage.getItem('skypredict_' + model);
+function loadSavedProgress() {
+  const raw = localStorage.getItem('skypredict_form');
   if (!raw) return;
   const d = JSON.parse(raw);
 
-  if (model === 'cancel') {
-    document.getElementById('c-year').value         = d.year        || '';
-    document.getElementById('c-month').value        = d.month       || '';
-    document.getElementById('c-day').value          = d.day         || '';
-    document.getElementById('c-dow').value          = d.dow         || '';
-    document.getElementById('c-carrier').value      = d.carrier     || '';
-    document.getElementById('c-dep-time').value     = d.depTime     || '';
-    document.getElementById('c-arr-time').value     = d.arrTime     || '';
-    document.getElementById('c-origin-state').value = d.originState || '';
-    document.getElementById('c-dest-state').value   = d.destState   || '';
-    document.getElementById('c-origin-city').value  = d.originCity  || '';
-    document.getElementById('c-dest-city').value    = d.destCity    || '';
-    document.getElementById('c-distance').value     = d.distance    || '';
-  } else {
-    document.getElementById('d-year').value         = d.year        || '';
-    document.getElementById('d-month').value        = d.month       || '';
-    document.getElementById('d-day').value          = d.day         || '';
-    document.getElementById('d-dow').value          = d.dow         || '';
-    document.getElementById('d-carrier').value      = d.carrier     || '';
-    document.getElementById('d-dep-time').value     = d.depTime     || '';
-    document.getElementById('d-arr-time').value     = d.arrTime     || '';
-    document.getElementById('d-airtime').value      = d.airtime     || '';
-    document.getElementById('d-distance').value     = d.distance    || '';
-    document.getElementById('d-dep-delay').value    = d.depDelay    || '';
-    document.getElementById('d-origin-state').value = d.originState || '';
-    document.getElementById('d-dest-state').value   = d.destState   || '';
-    document.getElementById('d-origin-city').value  = d.originCity  || '';
-    document.getElementById('d-dest-city').value    = d.destCity    || '';
-  }
+  document.getElementById('f-year').value         = d.year        || '';
+  document.getElementById('f-month').value        = d.month       || '';
+  document.getElementById('f-day').value          = d.day         || '';
+  document.getElementById('f-dow').value          = d.dow         || '';
+  document.getElementById('f-carrier').value      = d.carrier     || '';
+  document.getElementById('f-dep-time').value     = d.depTime     || '';
+  document.getElementById('f-arr-time').value     = d.arrTime     || '';
+  document.getElementById('f-origin-state').value = d.originState || '';
+  document.getElementById('f-dest-state').value   = d.destState   || '';
+  document.getElementById('f-origin-city').value  = d.originCity  || '';
+  document.getElementById('f-dest-city').value    = d.destCity    || '';
 
-  const ind = document.getElementById('save-indicator-' + model);
-  ind.textContent = '↩ Progreso restaurado';
+  document.getElementById('save-indicator-form').textContent = '↩ Progreso restaurado';
 }
 
-// ── Enviar formulario y mostrar modal ──
-function submitForm(model) {
-  const data = getFormData(model);
+// ── Enviar formulario al backend ──
+async function submitForm(modelo) {
+  const data = getFormData();
 
+  // Validación: campos vacíos
   const empty = Object.values(data).some(v => v === '' || v === null);
   if (empty) {
     alert('Por favor completa todos los campos antes de predecir.');
     return;
   }
 
-  const prob = Math.random();
-  const isPositive = prob > 0.5;
+  // Abrir modal y mostrar spinner
+  const modal = new bootstrap.Modal(document.getElementById('resultModal'));
+  document.getElementById('modal-title').textContent =
+    modelo === 'cancel' ? 'Predicción · Cancelación de vuelo' : 'Predicción · Retraso ≥ 15 min';
+  document.getElementById('modal-loading').style.display = 'block';
+  document.getElementById('modal-result-content').style.display = 'none';
+  modal.show();
 
+  try {
+    // ── Llamada real al backend Flask ──
+    const response = await fetch(`${BACKEND_URL}/predict/${modelo}`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(data)
+    });
+
+    const resultado = await response.json();
+
+    // Ocultar spinner y mostrar resultado
+    document.getElementById('modal-loading').style.display = 'none';
+    document.getElementById('modal-result-content').style.display = 'block';
+
+    // Mostrar resultado en el modal
+    mostrarResultado(resultado, data);
+
+    // ✅ Notificación de conexión exitosa con el backend
+    const statusBox  = document.getElementById('backend-status-box');
+    const statusText = document.getElementById('backend-status-text');
+    statusBox.style.background = 'rgba(100,200,120,0.12)';
+    statusBox.style.border     = '1px solid rgba(100,200,120,0.3)';
+    statusText.innerHTML = `<i class="bi bi-check-circle-fill me-1" style="color:#7ddb95;"></i>
+      <span style="color:#7ddb95;">Conexión con el backend exitosa</span>
+      <span class="text-white-50"> — respuesta recibida de Flask en localhost:5000</span>`;
+
+  } catch (error) {
+    // ❌ Backend no disponible — mostrar resultado simulado con aviso
+    document.getElementById('modal-loading').style.display = 'none';
+    document.getElementById('modal-result-content').style.display = 'block';
+
+    // Resultado simulado de respaldo
+    const prob = Math.random() * 0.4 + 0.1;
+    const resultadoSimulado = {
+      prediccion:   prob > 0.3 ? 1 : 0,
+      probabilidad: parseFloat(prob.toFixed(4)),
+      etiqueta:     modelo === 'cancel'
+        ? (prob > 0.3 ? 'Cancelado' : 'No cancelado')
+        : (prob > 0.3 ? 'Retraso ≥ 15 min' : 'Llegada a tiempo'),
+      modelo
+    };
+    mostrarResultado(resultadoSimulado, data);
+
+    // ⚠️ Aviso de que el backend no estaba activo
+    const statusBox  = document.getElementById('backend-status-box');
+    const statusText = document.getElementById('backend-status-text');
+    statusBox.style.background = 'rgba(244,162,97,0.1)';
+    statusBox.style.border     = '1px solid rgba(244,162,97,0.3)';
+    statusText.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1" style="color:var(--sunset-1);"></i>
+      <span style="color:var(--sunset-1);">Backend no disponible</span>
+      <span class="text-white-50"> — resultado simulado. Ejecuta app.py para activar Flask.</span>`;
+  }
+}
+
+// ── Renderizar resultado en el modal ──
+function mostrarResultado(resultado, data) {
   const badge   = document.getElementById('result-badge');
   const icon    = document.getElementById('result-icon');
   const label   = document.getElementById('result-label');
   const fill    = document.getElementById('result-prob-fill');
   const probTxt = document.getElementById('result-prob-text');
   const detail  = document.getElementById('result-detail');
-  const title   = document.getElementById('modal-title');
 
-  if (model === 'cancel') {
-    title.textContent = 'Predicción · Cancelación de vuelo';
-    if (isPositive) {
-      badge.className    = 'result-badge positive';
-      icon.className     = 'bi bi-x-circle-fill';
-      label.textContent  = 'Vuelo CANCELADO';
-      fill.className     = 'result-prob-fill high';
-      detail.textContent = 'Alta probabilidad de que el vuelo sea cancelado.';
-    } else {
-      badge.className    = 'result-badge negative';
-      icon.className     = 'bi bi-check-circle-fill';
-      label.textContent  = 'No cancelado';
-      fill.className     = 'result-prob-fill low';
-      detail.textContent = 'Baja probabilidad de cancelación.';
-    }
+  const isPositive = resultado.prediccion === 1;
+  const pct        = Math.round(resultado.probabilidad * 100);
+
+  if (isPositive) {
+    badge.className    = 'result-badge positive';
+    icon.className     = resultado.modelo === 'cancel' ? 'bi bi-x-circle-fill' : 'bi bi-clock-history';
+    fill.className     = 'result-prob-fill high';
+    detail.textContent = resultado.modelo === 'cancel'
+      ? 'Alta probabilidad de que el vuelo sea cancelado.'
+      : 'Alta probabilidad de llegar con retraso significativo.';
   } else {
-    title.textContent = 'Predicción · Retraso ≥ 15 min';
-    if (isPositive) {
-      badge.className    = 'result-badge positive';
-      icon.className     = 'bi bi-clock-history';
-      label.textContent  = 'Retraso ≥ 15 min';
-      fill.className     = 'result-prob-fill high';
-      detail.textContent = 'Alta probabilidad de llegar con retraso significativo.';
-    } else {
-      badge.className    = 'result-badge negative';
-      icon.className     = 'bi bi-check-circle-fill';
-      label.textContent  = 'Llegada a tiempo';
-      fill.className     = 'result-prob-fill low';
-      detail.textContent = 'Baja probabilidad de retraso significativo.';
-    }
+    badge.className    = 'result-badge negative';
+    icon.className     = 'bi bi-check-circle-fill';
+    fill.className     = 'result-prob-fill low';
+    detail.textContent = resultado.modelo === 'cancel'
+      ? 'Baja probabilidad de cancelación.'
+      : 'Baja probabilidad de retraso significativo.';
   }
 
-  const pct = Math.round(prob * 100);
+  label.textContent   = resultado.etiqueta;
   probTxt.textContent = pct + '%';
   setTimeout(() => { fill.style.width = pct + '%'; }, 100);
 
+  // Resumen de datos ingresados
   const months  = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const days    = ['','Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   const summary = document.getElementById('result-summary');
   summary.innerHTML = [
-    chip('bi-calendar3',      `${data.day}/${months[+data.month]}/${data.year}`),
-    chip('bi-calendar-week',  days[+data.dow] || data.dow),
-    chip('bi-airplane',       data.carrier),
-    chip('bi-geo-alt',        `${data.originCity || data.originState} → ${data.destCity || data.destState}`),
-    chip('bi-clock',          `${data.depTime} → ${data.arrTime}`),
-    data.distance ? chip('bi-rulers',          data.distance + ' mi') : '',
-    data.airtime  ? chip('bi-hourglass-split', data.airtime + ' min aire') : '',
-    data.depDelay !== undefined && data.depDelay !== ''
-      ? chip('bi-stopwatch', '+' + data.depDelay + ' min salida') : '',
+    chip('bi-calendar3',     `${data.day}/${months[+data.month]}/${data.year}`),
+    chip('bi-calendar-week', days[+data.dow] || data.dow),
+    chip('bi-airplane',      data.carrier),
+    chip('bi-geo-alt',       `${data.originCity || data.originState} → ${data.destCity || data.destState}`),
+    chip('bi-clock',         `${data.depTime} → ${data.arrTime}`),
   ].join('');
-
-  new bootstrap.Modal(document.getElementById('resultModal')).show();
 }
 
 function chip(icon, text) {
