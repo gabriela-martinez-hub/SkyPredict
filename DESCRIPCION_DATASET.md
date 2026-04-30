@@ -8,6 +8,7 @@
 | Campo | Detalle |
 |---|---|
 | **Plataforma** | [Kaggle](https://www.kaggle.com/) |
+| **Dataset** | [Kaggle](https://www.kaggle.com/) |
 | **Organismo original** | Bureau of Transportation Statistics (BTS), U.S. Department of Transportation |
 | **Período cubierto** | 2015 – 2020 |
 | **Dominio** | Aviación civil / Transporte aéreo en Estados Unidos |
