@@ -1,5 +1,4 @@
 // =============================================================
-// frontend.js
 // Proyecto: SkyPredict — Sistema Web de Predicción de Vuelos
 // Descripción: Lógica del frontend. Maneja navegación, formulario,
 //              comunicación con el backend Flask y visualización

@@ -10,8 +10,7 @@ import os
 # -------------------------------------------------------------
 # PASO 1 — Cargar el dataset ya filtrado (WN, DL, AA)
 # -------------------------------------------------------------
-# Este archivo fue generado en Flights.ipynb filtrando las 3 aerolíneas
-# con más vuelos del dataset original flights_all.csv
+
 RUTA_ENTRADA = 'flights_top3.csv'
 RUTA_SALIDA  = 'flights_processed.csv'
 
