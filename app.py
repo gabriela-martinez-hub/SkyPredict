@@ -5,7 +5,8 @@
 #              los preprocesa y devuelve una predicción.
 #
 # Endpoints:
-#   GET  /              → Sirve el frontend (index.html)
+#   GET  /               → Sirve el frontend (index.html)
+#   GET  /<filename>     → Sirve archivos estáticos (CSS, JS)
 #   POST /predict/cancel → Predicción de cancelación de vuelo
 #   POST /predict/delay  → Predicción de retraso >= 15 min
 # =============================================================
@@ -16,7 +17,7 @@ import pandas as pd
 import numpy as np
 import os
 
-app = Flask(__name__, static_folder='.')
+app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)  # Permite que el frontend se conecte al backend
 
 # -------------------------------------------------------------
@@ -28,6 +29,7 @@ CORS(app)  # Permite que el frontend se conecte al backend
 #
 # En la Entrega 3 estos mapeos serán reemplazados por los encoders
 # guardados (joblib) durante el entrenamiento real del modelo.
+
 
 CARRIER_MAP = {'AA': 0, 'DL': 1, 'WN': 2}
 
@@ -72,7 +74,6 @@ def preprocesar_entrada(datos, modelo):
     Orden de columnas (debe coincidir con el entrenamiento):
         YEAR, MONTH, DAY_OF_MONTH, DAY_OF_WEEK,
         OP_UNIQUE_CARRIER, CRS_DEP_TIME, CRS_ARR_TIME,
-        DEP_DELAY_NEW (solo para delay),
         ORIGIN_STATE_ABR, DEST_STATE_ABR,
         ORIGIN_CITY_NAME, DEST_CITY_NAME
     """
@@ -107,64 +108,36 @@ def index():
     return send_from_directory('.', 'index.html')
 
 # -------------------------------------------------------------
+# GET /<filename> — Sirve archivos estáticos (CSS, JS)
+# -------------------------------------------------------------
+@app.route('/<path:filename>')
+def static_files(filename):
+    """
+    Sirve cualquier archivo estático de la carpeta del proyecto.
+    Esto permite que el navegador cargue style.css y frontend.js
+    correctamente cuando abre http://localhost:5000
+    """
+    return send_from_directory('.', filename)
+
+# -------------------------------------------------------------
 # POST /predict/cancel — Predicción de cancelación de vuelo
 # -------------------------------------------------------------
 @app.route('/predict/cancel', methods=['POST'])
 def predict_cancel():
-    """
-    Recibe los datos del formulario de cancelación y devuelve
-    la predicción del modelo.
-
-    Entrada (JSON del frontend):
-    {
-        "year":        "2019",
-        "month":       "3",
-        "day":         "15",
-        "dow":         "5",
-        "carrier":     "WN",
-        "depTime":     "08:30",
-        "arrTime":     "10:45",
-        "originState": "TX",
-        "destState":   "CA",
-        "originCity":  "Dallas",
-        "destCity":    "Los Angeles"
-    }
-
-    Salida (JSON al frontend):
-    {
-        "prediccion":   0,          (0 = no cancelado, 1 = cancelado)
-        "probabilidad": 0.03,       (probabilidad de cancelación)
-        "etiqueta":     "No cancelado",
-        "modelo":       "cancel"
-    }
-    """
     try:
         datos = request.get_json()
-
         if not datos:
             return jsonify({'error': 'No se recibieron datos'}), 400
-
-        # Preprocesar entrada
         X = preprocesar_entrada(datos, 'cancel')
-
-        # ── PLACEHOLDER ──────────────────────────────────────────
-        # En Entrega 3 esta línea se reemplaza por:
-        #   prob = modelo_cancel.predict_proba(X)[0][1]
-        #   pred = int(modelo_cancel.predict(X)[0])
-        # Por ahora simulamos una probabilidad baja de cancelación
-        # basada en el mes (invierno = más cancelaciones).
         mes = int(datos.get('month', 6))
         prob = 0.08 if mes in [12, 1, 2] else 0.03
         pred = 1 if prob > 0.5 else 0
-        # ─────────────────────────────────────────────────────────
-
         return jsonify({
             'prediccion':   pred,
             'probabilidad': round(prob, 4),
             'etiqueta':     'Cancelado' if pred == 1 else 'No cancelado',
             'modelo':       'cancel'
         })
-
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -173,61 +146,22 @@ def predict_cancel():
 # -------------------------------------------------------------
 @app.route('/predict/delay', methods=['POST'])
 def predict_delay():
-    """
-    Recibe los datos del formulario de retraso y devuelve
-    la predicción del modelo.
-
-    Entrada (JSON del frontend):
-    {
-        "year":        "2019",
-        "month":       "6",
-        "day":         "20",
-        "dow":         "4",
-        "carrier":     "DL",
-        "depTime":     "07:00",
-        "arrTime":     "09:30",
-        "originState": "GA",
-        "destState":   "NY",
-        "originCity":  "Atlanta",
-        "destCity":    "New York"
-    }
-
-    Salida (JSON al frontend):
-    {
-        "prediccion":   1,          (0 = a tiempo, 1 = retraso >= 15 min)
-        "probabilidad": 0.72,       (probabilidad de retraso significativo)
-        "etiqueta":     "Retraso >= 15 min",
-        "modelo":       "delay"
-    }
-    """
     try:
         datos = request.get_json()
-
         if not datos:
             return jsonify({'error': 'No se recibieron datos'}), 400
-
-        # Preprocesar entrada
         X = preprocesar_entrada(datos, 'delay')
-
-        # ── PLACEHOLDER ──────────────────────────────────────────
-        # En Entrega 3 esta línea se reemplaza por:
-        #   prob = modelo_delay.predict_proba(X)[0][1]
-        #   pred = int(modelo_delay.predict(X)[0])
-        # Por ahora simulamos probabilidad basada en el mes y aerolínea.
-        mes      = int(datos.get('month', 6))
-        carrier  = datos.get('carrier', 'WN')
-        prob = 0.35 if mes in [12, 1, 2, 6, 7] else 0.22
-        prob = min(0.95, prob + (0.05 if carrier == 'WN' else 0))
-        pred = 1 if prob >= 0.5 else 0
-        # ─────────────────────────────────────────────────────────
-
+        mes     = int(datos.get('month', 6))
+        carrier = datos.get('carrier', 'WN')
+        prob    = 0.35 if mes in [12, 1, 2, 6, 7] else 0.22
+        prob    = min(0.95, prob + (0.05 if carrier == 'WN' else 0))
+        pred    = 1 if prob >= 0.5 else 0
         return jsonify({
             'prediccion':   pred,
             'probabilidad': round(prob, 4),
             'etiqueta':     'Retraso ≥ 15 min' if pred == 1 else 'Llegada a tiempo',
             'modelo':       'delay'
         })
-
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
