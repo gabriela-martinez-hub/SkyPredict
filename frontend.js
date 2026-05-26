@@ -359,19 +359,28 @@ async function submitForm(modelo) {
   document.getElementById('modal-result-content').style.display = 'none';
   modal.show();
 
+  // Determinar el endpoint principal y el modelo a comparar
+  const endpointPrincipal = `${BACKEND_URL}/predict/${modelo}`;
+
   try {
-    const response = await fetch(`${BACKEND_URL}/predict/${modelo}`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(data),
-    });
-    const resultado = await response.json();
+    // Llamar ambos modelos en paralelo para mostrar comparativa
+    const [resKNN, resMLP] = await Promise.all([
+      fetch(`${BACKEND_URL}/predict/${modelo}/knn`,  { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
+      fetch(`${BACKEND_URL}/predict/${modelo}/mlp`,  { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
+    ]);
+
+    const resultadoKNN = await resKNN.json();
+    const resultadoMLP = await resMLP.json();
+
+    // El resultado principal es el del modelo con mejor F1 (MLP en general)
+    // Pero mostramos ambos en la comparativa
+    const resultadoPrincipal = resultadoMLP.error ? resultadoKNN : resultadoMLP;
 
     document.getElementById('modal-loading').style.display = 'none';
     document.getElementById('modal-result-content').style.display = 'block';
-    mostrarResultado(resultado, data);
-
+    mostrarResultado(resultadoPrincipal, data, resultadoKNN, resultadoMLP);
     setBackendStatus('ok');
+
   } catch (error) {
     document.getElementById('modal-loading').style.display = 'none';
     document.getElementById('modal-result-content').style.display = 'block';
@@ -385,7 +394,7 @@ async function submitForm(modelo) {
         : (prob > 0.3 ? 'Retraso ≥ 15 min' : 'Llegada a tiempo'),
       modelo,
     };
-    mostrarResultado(resultadoSimulado, data);
+    mostrarResultado(resultadoSimulado, data, null, null);
     setBackendStatus('error');
   }
 }
@@ -409,7 +418,7 @@ function setBackendStatus(status) {
 }
 
 // ── Renderizar resultado en el modal ──
-function mostrarResultado(resultado, data) {
+function mostrarResultado(resultado, data, resultadoKNN, resultadoMLP) {
   const badge   = document.getElementById('result-badge');
   const icon    = document.getElementById('result-icon');
   const label   = document.getElementById('result-label');
@@ -438,7 +447,7 @@ function mostrarResultado(resultado, data) {
   probTxt.textContent = pct + '%';
   setTimeout(() => { fill.style.width = pct + '%'; }, 100);
 
-  // Resumen de datos
+  // ── Tab 1: Resumen de datos ingresados ──
   const months  = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const days    = ['','Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   const summary = document.getElementById('result-summary');
@@ -449,6 +458,64 @@ function mostrarResultado(resultado, data) {
     chip('bi-geo-alt',       `${data.originCity || data.originState} → ${data.destCity || data.destState}`),
     chip('bi-clock',         `${data.depTime} → ${data.arrTime}`),
   ].join('');
+
+  // ── Tab 2: Comparativa KNN vs MLP ──
+  const comp = document.getElementById('models-comparison');
+
+  if (!resultadoKNN && !resultadoMLP) {
+    comp.innerHTML = `<p style="color:#94a3b8;font-size:0.83rem;text-align:center;padding:1rem 0;">
+      Comparativa no disponible — backend desconectado.</p>`;
+    return;
+  }
+
+  const modelosData = [
+    { nombre: 'KNN',           subtitulo: 'K-Nearest Neighbors',   icono: '🔵', r: resultadoKNN },
+    { nombre: 'Red Neuronal',  subtitulo: 'MLP (64→32 neuronas)',   icono: '🟣', r: resultadoMLP },
+  ];
+
+  comp.innerHTML = `
+    <p style="font-size:0.8rem;color:#64748b;margin-bottom:0.75rem;">
+      Ambos modelos evaluaron los mismos datos. Compara sus predicciones y probabilidades.
+    </p>
+    ${modelosData.map(m => {
+      if (!m.r || m.r.error) return `
+        <div style="border:1px solid #e2e8f0;border-radius:10px;padding:0.85rem 1rem;margin-bottom:0.65rem;opacity:0.5;">
+          <div style="font-weight:600;font-size:0.88rem;">${m.icono} ${m.nombre} <span style="font-weight:400;color:#94a3b8;">— no disponible</span></div>
+        </div>`;
+
+      const pred    = m.r.prediccion === 1;
+      const pctM    = Math.round(m.r.probabilidad * 100);
+      const color   = pred ? '#dc2626' : '#16a34a';
+      const bgColor = pred ? '#fef2f2' : '#f0fdf4';
+      const borderC = pred ? '#fca5a5' : '#bbf7d0';
+      const barColor= pred ? '#ef4444' : '#22c55e';
+
+      return `
+        <div style="border:1px solid ${borderC};border-radius:10px;padding:0.85rem 1rem;
+                    margin-bottom:0.65rem;background:${bgColor};">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <div>
+              <span style="font-weight:700;font-size:0.9rem;">${m.icono} ${m.nombre}</span>
+              <span style="color:#64748b;font-size:0.78rem;margin-left:0.4rem;">${m.subtitulo}</span>
+            </div>
+            <span style="font-weight:700;color:${color};font-size:0.88rem;">${m.r.etiqueta}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.6rem;">
+            <div style="flex:1;background:#e2e8f0;border-radius:999px;height:7px;overflow:hidden;">
+              <div style="width:${pctM}%;background:${barColor};height:100%;border-radius:999px;
+                          transition:width 0.6s ease;"></div>
+            </div>
+            <span style="font-size:0.82rem;font-weight:600;color:${color};min-width:36px;text-align:right;">${pctM}%</span>
+          </div>
+        </div>`;
+    }).join('')}
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
+                padding:0.6rem 0.85rem;font-size:0.78rem;color:#64748b;margin-top:0.25rem;">
+      <i class="bi bi-info-circle me-1"></i>
+      El resultado principal mostrado arriba corresponde al modelo con mejor desempeño general (F1-Score).
+      Esta comparativa es informativa para evaluar la consistencia entre modelos.
+    </div>
+  `;
 }
 
 function chip(icon, text) {

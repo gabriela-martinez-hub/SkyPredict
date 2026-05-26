@@ -333,11 +333,39 @@
               <div class="result-detail" id="result-detail"></div>
             </div>
 
+            <!-- Tabs -->
             <div class="mt-3">
-              <div class="form-section-title" style="margin-top:0;">
-                <i class="bi bi-list-check"></i> Datos ingresados
+              <ul class="nav nav-tabs" id="resultTabs" role="tablist"
+                  style="font-size:0.84rem; border-bottom:1px solid #e2e8f0;">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="tab-resumen-btn"
+                          data-bs-toggle="tab" data-bs-target="#tab-resumen"
+                          type="button" role="tab"
+                          style="padding:0.4rem 0.85rem;">
+                    <i class="bi bi-list-check me-1"></i>Resumen
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="tab-modelos-btn"
+                          data-bs-toggle="tab" data-bs-target="#tab-modelos"
+                          type="button" role="tab"
+                          style="padding:0.4rem 0.85rem;">
+                    <i class="bi bi-robot me-1"></i>Detalles de modelos
+                  </button>
+                </li>
+              </ul>
+
+              <div class="tab-content pt-3">
+                <!-- Tab 1: Resumen de datos ingresados -->
+                <div class="tab-pane fade show active" id="tab-resumen" role="tabpanel">
+                  <div id="result-summary"></div>
+                </div>
+
+                <!-- Tab 2: Comparativa KNN vs MLP -->
+                <div class="tab-pane fade" id="tab-modelos" role="tabpanel">
+                  <div id="models-comparison"></div>
+                </div>
               </div>
-              <div id="result-summary"></div>
             </div>
 
             <!-- Estado del backend -->
