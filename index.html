@@ -10,46 +10,40 @@
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <!-- Estilos propios -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Fondo cielo -->
-  <div class="sky-bg"></div>
-  <div class="stars" id="stars"></div>
-
-  <div class="app-wrapper">
-
-    <!-- Header -->
-    <header>
-      <div>
-        <i class="bi bi-airplane-fill logo-plane"></i>
+  <!-- ── Header ── -->
+  <header>
+    <div class="logo-wrap">
+      <div class="logo-plane">
+        <i class="bi bi-airplane-fill"></i>
       </div>
       <div>
         <div class="logo-text">Sky<span>Predict</span></div>
         <div class="logo-sub">Predicción de Vuelos · ML</div>
       </div>
-    </header>
+    </div>
+    <span class="header-badge">Ciencia de los Datos · 2026</span>
+  </header>
 
-    <!-- Contenido principal -->
+  <div class="app-wrapper">
     <div class="center-container">
       <div class="glass-card">
 
-        <!-- ══════════════════════════════
-             SCREEN 1: Selección de modelo
-             ══════════════════════════════ -->
-        <!-- ══════════════════════════════
-             SCREEN 1: Pantalla de inicio
-             ══════════════════════════════ -->
+        <!-- ════════════════════════════════
+             SCREEN 1 — Pantalla de inicio
+             ════════════════════════════════ -->
         <div class="screen active" id="screen-select">
 
           <div class="text-center mb-4">
             <h1 class="screen-title">Bienvenido a SkyPredict</h1>
             <p class="screen-subtitle">
               Sistema de predicción de vuelos basado en modelos de aprendizaje supervisado.<br>
-              Conoce cada modelo y decide cuál usar antes de ingresar al formulario.
+              Elige el modelo que necesitas y completa el formulario para obtener tu predicción.
             </p>
           </div>
 
@@ -59,16 +53,18 @@
             <div class="col-12 col-md-6">
               <div class="info-card cancel h-100">
                 <div class="info-card-header">
-                  <div class="model-icon"><i class="bi bi-x-circle-fill"></i></div>
+                  <div class="model-icon">
+                    <i class="bi bi-x-circle-fill"></i>
+                  </div>
                   <div>
                     <div class="model-title">Cancelación de vuelo</div>
-                    <span class="model-badge" style="margin-top:0.3rem;">Clasificación binaria</span>
+                    <span class="model-badge">Clasificación binaria</span>
                   </div>
                 </div>
 
                 <p class="info-card-desc">
                   Predice si un vuelo será <strong>cancelado antes de despegar</strong>,
-                  basado en las características del vuelo programado.
+                  basado en las características programadas del vuelo.
                 </p>
 
                 <div class="info-section-label">¿Qué predice?</div>
@@ -78,12 +74,12 @@
                   junto con la probabilidad estimada.
                 </p>
 
-                <div class="info-section-label">Información que necesitarás</div>
+                <div class="info-section-label">Información requerida</div>
                 <ul class="info-list">
                   <li><i class="bi bi-calendar3"></i> Fecha del vuelo (año, mes, día, día de la semana)</li>
                   <li><i class="bi bi-airplane"></i> Aerolínea (WN, DL o AA)</li>
                   <li><i class="bi bi-clock"></i> Hora de salida y llegada programadas</li>
-                  <li><i class="bi bi-geo-alt"></i> Ciudad y estado de origen y destino</li>
+                  <li><i class="bi bi-geo-alt"></i> Estado y ciudad de origen y destino</li>
                 </ul>
 
                 <div class="info-section-label">Aerolíneas disponibles</div>
@@ -92,7 +88,6 @@
                   <span class="airline-chip">✈ DL — Delta</span>
                   <span class="airline-chip">✈ AA — American</span>
                 </div>
-
               </div>
             </div>
 
@@ -100,10 +95,12 @@
             <div class="col-12 col-md-6">
               <div class="info-card delay h-100">
                 <div class="info-card-header">
-                  <div class="model-icon" style="color:var(--sky-light);"><i class="bi bi-clock-history"></i></div>
+                  <div class="model-icon">
+                    <i class="bi bi-clock-history"></i>
+                  </div>
                   <div>
                     <div class="model-title">Retraso significativo</div>
-                    <span class="model-badge delay-badge" style="margin-top:0.3rem;">Clasificación binaria</span>
+                    <span class="model-badge">Clasificación binaria</span>
                   </div>
                 </div>
 
@@ -119,145 +116,172 @@
                   junto con la probabilidad estimada.
                 </p>
 
-                <div class="info-section-label">Información que necesitarás</div>
+                <div class="info-section-label">Información requerida</div>
                 <ul class="info-list">
                   <li><i class="bi bi-calendar3"></i> Fecha del vuelo (año, mes, día, día de la semana)</li>
                   <li><i class="bi bi-airplane"></i> Aerolínea (WN, DL o AA)</li>
                   <li><i class="bi bi-clock"></i> Hora de salida y llegada programadas</li>
-                  <li><i class="bi bi-geo-alt"></i> Ciudad y estado de origen y destino</li>
+                  <li><i class="bi bi-geo-alt"></i> Estado y ciudad de origen y destino</li>
                 </ul>
 
                 <div class="info-section-label">Aerolíneas disponibles</div>
                 <div class="airline-chips">
-                  <span class="airline-chip delay-chip">✈ WN — Southwest</span>
-                  <span class="airline-chip delay-chip">✈ DL — Delta</span>
-                  <span class="airline-chip delay-chip">✈ AA — American</span>
+                  <span class="airline-chip">✈ WN — Southwest</span>
+                  <span class="airline-chip">✈ DL — Delta</span>
+                  <span class="airline-chip">✈ AA — American</span>
                 </div>
-
               </div>
             </div>
 
-          </div>
+          </div><!-- /row -->
 
-          <!-- Botón único centrado -->
+          <!-- Único botón para ir al formulario -->
           <div class="text-center mt-4">
-            <button class="btn btn-enter-form px-5" onclick="goToForm()">
-              <i class="bi bi-arrow-right-circle me-2"></i>Ingresar al formulario
+            <button class="btn btn-enter-form" style="width:auto;padding:0.7rem 2.5rem;" onclick="goToForm()">
+              <i class="bi bi-arrow-right-circle me-2"></i>Ir al formulario de predicción
             </button>
+            <p class="mt-2" style="font-size:0.78rem;color:var(--text-muted);">
+              En el formulario podrás elegir entre predecir cancelación o retraso
+            </p>
           </div>
+        </div><!-- /screen-select -->
 
-        </div>
 
-        <!-- ══════════════════════════════
-             SCREEN 2: Formulario unificado
-             ══════════════════════════════ -->
+        <!-- ════════════════════════════════
+             SCREEN 2 — Formulario
+             ════════════════════════════════ -->
         <div class="screen" id="screen-form">
 
-          <!-- Título dinámico según modelo seleccionado -->
-          <h1 class="screen-title" id="form-title"></h1>
-          <p class="screen-subtitle">Completa los datos del vuelo para obtener la predicción.</p>
+          <h1 class="screen-title" id="form-title">Formulario de Predicción</h1>
+          <p class="screen-subtitle">Completa todos los campos del vuelo para obtener la predicción.</p>
 
-          <form id="form-vuelo" novalidate>
+          <!-- ── SECCIÓN 1: Fecha ── -->
+          <div class="form-section-title">
+            <i class="bi bi-calendar3"></i> Fecha del vuelo
+          </div>
+          <div class="row g-3">
+            <div class="col-6 col-md-3">
+              <label class="form-label">Año</label>
+              <select class="form-select" id="f-year" required>
+                <option value="">Año</option>
+                <option>2015</option><option>2016</option><option>2017</option>
+                <option>2018</option><option>2019</option><option>2020</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label">Mes</label>
+              <select class="form-select" id="f-month" required>
+                <option value="">Mes</option>
+                <option value="1">Enero</option><option value="2">Febrero</option>
+                <option value="3">Marzo</option><option value="4">Abril</option>
+                <option value="5">Mayo</option><option value="6">Junio</option>
+                <option value="7">Julio</option><option value="8">Agosto</option>
+                <option value="9">Septiembre</option><option value="10">Octubre</option>
+                <option value="11">Noviembre</option><option value="12">Diciembre</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label">Día del mes</label>
+              <input type="number" class="form-control" id="f-day"
+                     min="1" max="31" placeholder="1 – 31" required />
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label">Día de la semana</label>
+              <select class="form-select" id="f-dow" required>
+                <option value="">Día</option>
+                <option value="1">Lunes</option><option value="2">Martes</option>
+                <option value="3">Miércoles</option><option value="4">Jueves</option>
+                <option value="5">Viernes</option><option value="6">Sábado</option>
+                <option value="7">Domingo</option>
+              </select>
+            </div>
+          </div>
 
-            <div class="form-section-title"><i class="bi bi-calendar3 me-1"></i> Fecha del vuelo</div>
-            <div class="row g-3">
-              <div class="col-6 col-md-3">
-                <label class="form-label">Año</label>
-                <select class="form-select" id="f-year" required>
-                  <option value="">Año</option>
-                  <option>2015</option><option>2016</option><option>2017</option>
-                  <option>2018</option><option>2019</option><option>2020</option>
-                </select>
-              </div>
-              <div class="col-6 col-md-3">
-                <label class="form-label">Mes</label>
-                <select class="form-select" id="f-month" required>
-                  <option value="">Mes</option>
-                  <option value="1">Enero</option><option value="2">Febrero</option>
-                  <option value="3">Marzo</option><option value="4">Abril</option>
-                  <option value="5">Mayo</option><option value="6">Junio</option>
-                  <option value="7">Julio</option><option value="8">Agosto</option>
-                  <option value="9">Septiembre</option><option value="10">Octubre</option>
-                  <option value="11">Noviembre</option><option value="12">Diciembre</option>
-                </select>
-              </div>
-              <div class="col-6 col-md-3">
-                <label class="form-label">Día del mes</label>
-                <input type="number" class="form-control" id="f-day" min="1" max="31" placeholder="1–31" required />
-              </div>
-              <div class="col-6 col-md-3">
-                <label class="form-label">Día semana</label>
-                <select class="form-select" id="f-dow" required>
-                  <option value="">Día</option>
-                  <option value="1">Lunes</option><option value="2">Martes</option>
-                  <option value="3">Miércoles</option><option value="4">Jueves</option>
-                  <option value="5">Viernes</option><option value="6">Sábado</option>
-                  <option value="7">Domingo</option>
-                </select>
+          <!-- ── SECCIÓN 2: Datos del vuelo ── -->
+          <div class="form-section-title">
+            <i class="bi bi-airplane"></i> Datos del vuelo
+          </div>
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label">Aerolínea</label>
+              <select class="form-select" id="f-carrier" required>
+                <option value="">Selecciona</option>
+                <option value="WN">WN — Southwest Airlines</option>
+                <option value="DL">DL — Delta Air Lines</option>
+                <option value="AA">AA — American Airlines</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label">Hora de salida programada</label>
+              <input type="time" class="form-control" id="f-dep-time" required />
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label">Hora de llegada programada</label>
+              <input type="time" class="form-control" id="f-arr-time" required />
+            </div>
+          </div>
+
+          <!-- ── SECCIÓN 3: Ruta (dropdowns con búsqueda) ── -->
+          <div class="form-section-title">
+            <i class="bi bi-geo-alt"></i> Ruta
+          </div>
+
+          <div class="row g-3">
+
+            <!-- Estado de origen -->
+            <div class="col-6">
+              <label class="form-label">Estado de origen</label>
+              <div class="custom-select-wrap" id="wrap-origin-state"></div>
+            </div>
+
+            <!-- Estado de destino -->
+            <div class="col-6">
+              <label class="form-label">Estado de destino</label>
+              <div class="custom-select-wrap" id="wrap-dest-state"></div>
+            </div>
+
+            <!-- Ciudad de origen (filtrada por estado) -->
+            <div class="col-6">
+              <label class="form-label">Ciudad de origen</label>
+              <div class="custom-select-wrap" id="wrap-origin-city"></div>
+              <div class="field-hint" id="origin-city-hint">
+                <i class="bi bi-info-circle"></i> Selecciona primero el estado de origen
               </div>
             </div>
 
-            <div class="form-section-title"><i class="bi bi-airplane me-1"></i> Datos del vuelo</div>
-            <div class="row g-3">
-              <div class="col-12 col-md-4">
-                <label class="form-label">Aerolínea</label>
-                <select class="form-select" id="f-carrier" required>
-                  <option value="">Selecciona</option>
-                  <option value="WN">WN — Southwest Airlines</option>
-                  <option value="DL">DL — Delta Air Lines</option>
-                  <option value="AA">AA — American Airlines</option>
-                </select>
-              </div>
-              <div class="col-6 col-md-4">
-                <label class="form-label">Hora salida programada</label>
-                <input type="time" class="form-control" id="f-dep-time" required />
-              </div>
-              <div class="col-6 col-md-4">
-                <label class="form-label">Hora llegada programada</label>
-                <input type="time" class="form-control" id="f-arr-time" required />
+            <!-- Ciudad de destino (filtrada por estado) -->
+            <div class="col-6">
+              <label class="form-label">Ciudad de destino</label>
+              <div class="custom-select-wrap" id="wrap-dest-city"></div>
+              <div class="field-hint" id="dest-city-hint">
+                <i class="bi bi-info-circle"></i> Selecciona primero el estado de destino
               </div>
             </div>
 
-            <div class="form-section-title"><i class="bi bi-geo-alt me-1"></i> Ruta</div>
-            <div class="row g-3">
-              <div class="col-6">
-                <label class="form-label">Estado de origen</label>
-                <input type="text" class="form-control" id="f-origin-state" placeholder="Ej. TX" maxlength="2" required />
-              </div>
-              <div class="col-6">
-                <label class="form-label">Estado de destino</label>
-                <input type="text" class="form-control" id="f-dest-state" placeholder="Ej. CA" maxlength="2" required />
-              </div>
-              <div class="col-6">
-                <label class="form-label">Ciudad de origen</label>
-                <input type="text" class="form-control" id="f-origin-city" placeholder="Ej. Dallas" required />
-              </div>
-              <div class="col-6">
-                <label class="form-label">Ciudad de destino</label>
-                <input type="text" class="form-control" id="f-dest-city" placeholder="Ej. Los Angeles" required />
-              </div>
-            </div>
+          </div><!-- /row ruta -->
 
-          </form>
-
-          <!-- Botones de acción -->
+          <!-- ── Botones de acción ── -->
           <div class="d-flex align-items-center justify-content-between mt-4 flex-wrap gap-2">
+
             <button class="btn btn-back" onclick="goBack()">
               <i class="bi bi-arrow-left me-1"></i> Regresar
             </button>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
+
+            <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
               <button class="btn btn-save" id="btn-save-form" onclick="saveProgress()">
                 <i class="bi bi-floppy me-1"></i> Guardar progreso
               </button>
               <span class="save-indicator" id="save-indicator-form"></span>
-              <!-- Dos botones de predicción -->
+
               <button class="btn btn-predict-cancel" onclick="submitForm('cancel')">
                 <i class="bi bi-x-circle me-1"></i> Predecir cancelación
               </button>
+
               <button class="btn btn-predict-delay" onclick="submitForm('delay')">
                 <i class="bi bi-clock-history me-1"></i> Predecir retraso
               </button>
             </div>
+
           </div>
 
         </div><!-- /screen-form -->
@@ -265,26 +289,28 @@
       </div><!-- /glass-card -->
     </div><!-- /center-container -->
 
-    <footer>SkyPredict · Ciencia de los Datos · 2025</footer>
+    <footer>SkyPredict · Ciencia de los Datos · 2026</footer>
   </div><!-- /app-wrapper -->
 
 
-  <!-- ══════════════════════════════
-       MODAL: Resultado de predicción
-       ══════════════════════════════ -->
+  <!-- ════════════════════════════════
+       MODAL — Resultado de predicción
+       ════════════════════════════════ -->
   <div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
+
         <div class="modal-header">
           <h5 class="modal-title" id="modal-title">Resultado de la Predicción</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
+
         <div class="modal-body">
 
-          <!-- Spinner mientras espera respuesta del backend -->
-          <div id="modal-loading" class="text-center py-3" style="display:none;">
-            <div class="spinner-border text-light" role="status"></div>
-            <p class="text-white-50 mt-2 mb-0">Consultando el backend...</p>
+          <!-- Spinner -->
+          <div id="modal-loading" class="text-center py-4" style="display:none;">
+            <div class="spinner-border" role="status" style="width:2rem;height:2rem;"></div>
+            <p class="mt-3 mb-0" style="color:#64748b;font-size:0.88rem;">Consultando el backend…</p>
           </div>
 
           <!-- Resultado -->
@@ -298,8 +324,8 @@
 
             <div class="mb-3">
               <div class="d-flex justify-content-between mb-1">
-                <small class="text-white-50">Probabilidad estimada</small>
-                <small class="text-white" id="result-prob-text">—</small>
+                <small style="color:#64748b;">Probabilidad estimada</small>
+                <small style="color:#0f172a;font-weight:600;" id="result-prob-text">—</small>
               </div>
               <div class="result-prob-bar">
                 <div class="result-prob-fill" id="result-prob-fill" style="width:0%"></div>
@@ -307,37 +333,71 @@
               <div class="result-detail" id="result-detail"></div>
             </div>
 
+            <!-- Tabs -->
             <div class="mt-3">
-              <div class="form-section-title" style="margin-top:0;">
-                <i class="bi bi-list-check me-1"></i> Datos ingresados
+              <ul class="nav nav-tabs" id="resultTabs" role="tablist"
+                  style="font-size:0.84rem; border-bottom:1px solid #e2e8f0;">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="tab-resumen-btn"
+                          data-bs-toggle="tab" data-bs-target="#tab-resumen"
+                          type="button" role="tab"
+                          style="padding:0.4rem 0.85rem;">
+                    <i class="bi bi-list-check me-1"></i>Resumen
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="tab-modelos-btn"
+                          data-bs-toggle="tab" data-bs-target="#tab-modelos"
+                          type="button" role="tab"
+                          style="padding:0.4rem 0.85rem;">
+                    <i class="bi bi-robot me-1"></i>Detalles de modelos
+                  </button>
+                </li>
+              </ul>
+
+              <div class="tab-content pt-3">
+                <!-- Tab 1: Resumen de datos ingresados -->
+                <div class="tab-pane fade show active" id="tab-resumen" role="tabpanel">
+                  <div id="result-summary"></div>
+                </div>
+
+                <!-- Tab 2: Comparativa KNN vs MLP -->
+                <div class="tab-pane fade" id="tab-modelos" role="tabpanel">
+                  <div id="models-comparison"></div>
+                </div>
               </div>
-              <div id="result-summary"></div>
             </div>
 
-            <!-- Estado de conexión con el backend -->
-            <div class="mt-3 p-2" id="backend-status-box" style="border-radius:8px;">
-              <small id="backend-status-text">
-                <i class="bi bi-info-circle me-1"></i>
+            <!-- Estado del backend -->
+            <div class="mt-3" id="backend-status-box"
+                 style="border-radius:8px;padding:0.55rem 0.8rem;
+                        background:#f8fafc;border:1px solid #e2e8f0;">
+              <small id="backend-status-text" style="color:#64748b;">
+                <i class="bi bi-info-circle me-1"></i> Esperando resultado…
               </small>
             </div>
           </div>
 
-        </div>
+        </div><!-- /modal-body -->
+
         <div class="modal-footer">
           <button type="button" class="btn btn-back" data-bs-dismiss="modal">
             <i class="bi bi-arrow-left me-1"></i> Volver al formulario
           </button>
-          <button type="button" class="btn btn-predict-cancel" data-bs-dismiss="modal" onclick="goBack()">
+          <button type="button" class="btn btn-predict-delay"
+                  data-bs-dismiss="modal" onclick="goBack()">
             Nueva predicción <i class="bi bi-plus-lg ms-1"></i>
           </button>
         </div>
+
       </div>
     </div>
-  </div>
+  </div><!-- /modal -->
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- JavaScript propio -->
+  <!-- JS propio -->
   <script src="frontend.js"></script>
+
 </body>
 </html>
