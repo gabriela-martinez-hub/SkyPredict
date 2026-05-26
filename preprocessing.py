@@ -2,23 +2,13 @@
 # Proyecto: SkyPredict — Sistema Web de Predicción de Vuelos
 # Descripción: Limpieza y transformación del dataset de vuelos filtrado a las 3 aerolíneas principales (WN, DL, AA)
 # ===========================================================================================================================
-# ===========================================================================================================================
-# Proyecto: SkyPredict — Sistema Web de Predicción de Vuelos
-# Descripción: Limpieza y transformación del dataset de vuelos filtrado a las 3 aerolíneas principales (WN, DL, AA)
-# ===========================================================================================================================
 
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+import joblib
 import os
 
-# ===========================================================================================================================
-# Proyecto: SkyPredict — Sistema Web de Predicción de Vuelos
-# Descripción: Limpieza y transformación del dataset de vuelos filtrado a las 3 aerolíneas principales (WN, DL, AA)
-# ===========================================================================================================================
-
-import pandas as pd
-from sklearn.preprocessing import LabelEncoder
-import os
+os.makedirs('models', exist_ok=True)
 
 # -------------------------------------------------------------
 # PASO 1 — Cargar el dataset ya filtrado (WN, DL, AA)
@@ -183,6 +173,12 @@ for col in columnas_categoricas:
     df[col] = le.fit_transform(df[col].astype(str))
     encoders[col] = le
     print(f"    {col}: {len(le.classes_)} categorías únicas → enteros 0 a {len(le.classes_)-1}")
+
+# Guardar encoders para que app.py los use al codificar la entrada del usuario
+# Sin esto, app.py usa un hash que produce valores fuera del rango del modelo
+import joblib
+joblib.dump(encoders, 'models/label_encoders.pkl')
+print(f"    models/label_encoders.pkl guardado")
 
 # -------------------------------------------------------------
 # PASO 8 — Verificación final del dataset procesado
