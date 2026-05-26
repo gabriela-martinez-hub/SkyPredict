@@ -2,6 +2,19 @@
 # Proyecto: SkyPredict — Sistema Web de Predicción de Vuelos
 # Descripción: Limpieza y transformación del dataset de vuelos filtrado a las 3 aerolíneas principales (WN, DL, AA)
 # ===========================================================================================================================
+# ===========================================================================================================================
+# Proyecto: SkyPredict — Sistema Web de Predicción de Vuelos
+# Descripción: Limpieza y transformación del dataset de vuelos filtrado a las 3 aerolíneas principales (WN, DL, AA)
+# ===========================================================================================================================
+
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+import os
+
+# ===========================================================================================================================
+# Proyecto: SkyPredict — Sistema Web de Predicción de Vuelos
+# Descripción: Limpieza y transformación del dataset de vuelos filtrado a las 3 aerolíneas principales (WN, DL, AA)
+# ===========================================================================================================================
 
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
@@ -85,8 +98,9 @@ print(f"    Columnas restantes: {df.shape[1]}")
 
 for col in ['CRS_DEP_TIME', 'CRS_ARR_TIME']:
     nulos_antes = df[col].isnull().sum()
+    df[col] = pd.to_numeric(df[col], errors='coerce')
     mediana = df[col].median()
-    df[col].fillna(mediana, inplace=True)
+    df[col] = df[col].fillna(mediana)
     print(f"\n[4] {col}: {nulos_antes:,} nulos imputados con mediana ({mediana})")
 
 # -------------------------------------------------------------
@@ -101,30 +115,32 @@ for col in ['CRS_DEP_TIME', 'CRS_ARR_TIME']:
 # Fórmula: minutos = (HHMM // 100) * 60 + (HHMM % 100)
 # Ejemplo: 1430 → (1430 // 100) * 60 + (1430 % 100) = 14*60 + 30 = 870
 
-def hhmm_a_minutos(valor):
-    valor = int(valor)
-    horas   = valor // 100
-    minutos = valor % 100
-    return horas * 60 + minutos
+def hhmm_a_minutos(serie):
+    """Convierte serie HHMM numérica a minutos desde medianoche (vectorizado)."""
+    serie   = pd.to_numeric(serie, errors='coerce').fillna(0)
+    horas   = (serie // 100).astype(int)
+    minutos = (serie % 100).astype(int)
+    return (horas * 60 + minutos).astype(float)
 
-df['CRS_DEP_TIME'] = df['CRS_DEP_TIME'].apply(hhmm_a_minutos).astype(float)
-df['CRS_ARR_TIME'] = df['CRS_ARR_TIME'].apply(hhmm_a_minutos).astype(float)
+df['CRS_DEP_TIME'] = hhmm_a_minutos(df['CRS_DEP_TIME'])
+df['CRS_ARR_TIME'] = hhmm_a_minutos(df['CRS_ARR_TIME'])
 
 print(f"\n[5] CRS_DEP_TIME convertida a minutos. Rango: {df['CRS_DEP_TIME'].min():.0f} – {df['CRS_DEP_TIME'].max():.0f} min")
 print(f"    CRS_ARR_TIME convertida a minutos. Rango: {df['CRS_ARR_TIME'].min():.0f} – {df['CRS_ARR_TIME'].max():.0f} min")
 
 # -------------------------------------------------------------
-# PASO 6 — Eliminar filas con nulos en DEP_DELAY_NEW
+# PASO 6 — Eliminar filas con nulos en DELAYED_15
 # -------------------------------------------------------------
-# DEP_DELAY_NEW tiene nulos en vuelos cancelados (2.09%).
-# Estos registros no tienen retraso de salida registrado,
-# por lo tanto no son útiles como features de entrada.
-# Se eliminan para mantener la integridad del dataset.
+# DELAYED_15 es nulo en vuelos cancelados porque ARR_DELAY_NEW
+# (usada para crearla en el paso 2) es nula para esos vuelos.
+# Estos registros se eliminan para que el dataset quede limpio.
+# NOTA: DEP_DELAY_NEW fue eliminada en el paso 3, por eso
+# el dropna se hace sobre DELAYED_15 y no sobre aquella.
 
 filas_antes = df.shape[0]
-df.dropna(subset=['DEP_DELAY_NEW'], inplace=True)
+df.dropna(subset=['DELAYED_15'], inplace=True)
 filas_eliminadas = filas_antes - df.shape[0]
-print(f"\n[6] Filas eliminadas por nulos en DEP_DELAY_NEW: {filas_eliminadas:,}")
+print(f"\n[6] Filas eliminadas por nulos en DELAYED_15: {filas_eliminadas:,}")
 print(f"    Filas restantes: {df.shape[0]:,}")
 
 # -------------------------------------------------------------
@@ -184,13 +200,13 @@ roles = {
     'OP_UNIQUE_CARRIER':'Feature codificada (aerolínea)',
     'CRS_DEP_TIME':     'Feature numérica (minutos desde medianoche)',
     'CRS_ARR_TIME':     'Feature numérica (minutos desde medianoche)',
-    'DEP_DELAY_NEW':    'Feature numérica (minutos de retraso en salida)',
+    # DEP_DELAY_NEW fue eliminada (data leakage) — no aparece en el dataset final
     'ORIGIN_STATE_ABR': 'Feature codificada (estado origen)',
     'DEST_STATE_ABR':   'Feature codificada (estado destino)',
     'ORIGIN_CITY_NAME': 'Feature codificada (ciudad origen)',
     'DEST_CITY_NAME':   'Feature codificada (ciudad destino)',
-    'CANCELLED':        '🎯 TARGET — Modelo 1: Cancelación de vuelo',
-    'DELAYED_15':       '🎯 TARGET — Modelo 2: Retraso ≥ 15 min',
+    'CANCELLED':        'TARGET — Modelo 1: Cancelación de vuelo',
+    'DELAYED_15':       'TARGET — Modelo 2: Retraso ≥ 15 min',
 }
 
 for col in df.columns:
@@ -201,4 +217,4 @@ for col in df.columns:
 # -------------------------------------------------------------
 df.to_csv(RUTA_SALIDA, index=False)
 print(f"\n[9] Dataset guardado como: {RUTA_SALIDA}")
-print("\n✅ Preprocesamiento completado.")
+print("\nPreprocesamiento completado.")
